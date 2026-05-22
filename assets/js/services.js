@@ -1,7 +1,20 @@
 document.addEventListener("DOMContentLoaded", () => {
     const serviceForm = document.getElementById("service-form");
+    const serviceVehicleFilter = document.getElementById("service_vehicle_filter");
 
     loadVehiclesForServices();
+
+    serviceVehicleFilter.addEventListener("change", () => {
+    const vehicleId = serviceVehicleFilter.value;
+
+    if (vehicleId === "") {
+        resetServicesView();
+        return;
+    }
+
+        loadServices(vehicleId);
+    });
+
 
     if (serviceForm) {
         serviceForm.addEventListener("submit", (event) => {
@@ -183,6 +196,8 @@ async function addService(serviceData) {
         const filterSelect = document.getElementById("service_vehicle_filter");
         filterSelect.value = String(serviceData.vehicleId);
 
+        loadServices(serviceData.vehicleId);
+
     } catch (error) {
         showFormMessage(
             "service-message",
@@ -190,4 +205,115 @@ async function addService(serviceData) {
             "Nije moguće spremiti servis. Pokušaj ponovno."
         );
     }
+}
+
+
+async function loadServices(vehicleId) {
+    const servicesList = document.getElementById("services-list");
+    const servicesCount = document.getElementById("services-count");
+    const totalCost = document.getElementById("total-cost");
+
+    servicesList.innerHTML = `<p class="empty-state">Učitavanje servisnih zapisa...</p>`;
+    servicesCount.textContent = "0 zapisa";
+    totalCost.textContent = "0,00 €";
+
+    try {
+        const response = await fetch(`/carcare/api/services/get_services.php?vehicle_id=${vehicleId}`);
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+            servicesList.innerHTML = `<p class="empty-state">${result.message}</p>`;
+            return;
+        }
+
+        renderServices(result.services, result.totalCost);
+
+    } catch (error) {
+        servicesList.innerHTML = `
+            <p class="empty-state">
+                Nije moguće dohvatiti servisne zapise. Pokušaj ponovno.
+            </p>
+        `;
+    }
+}
+
+
+function renderServices(services, totalCostValue) {
+    const servicesList = document.getElementById("services-list");
+    const servicesCount = document.getElementById("services-count");
+    const totalCost = document.getElementById("total-cost");
+
+    servicesCount.textContent = getServicesCountText(services.length);
+    totalCost.textContent = formatCurrency(totalCostValue);
+
+    if (services.length === 0) {
+        servicesList.innerHTML = `
+            <p class="empty-state">
+                Za odabrano vozilo još nema servisnih zapisa.
+            </p>
+        `;
+        return;
+    }
+
+    servicesList.innerHTML = "";
+
+    services.forEach((service) => {
+        const card = document.createElement("article");
+        card.className = "service-card";
+
+        card.innerHTML = `
+            <h3>${escapeHtml(service.service_type)}</h3>
+
+            <div class="service-meta">
+                <span><strong>Datum:</strong> ${formatDate(service.service_date)}</span>
+                <span><strong>Kilometraža:</strong> ${Number(service.mileage_at_service).toLocaleString("hr-HR")} km</span>
+                <span><strong>Cijena:</strong> ${formatCurrency(service.cost)}</span>
+            </div>
+
+            <p class="service-description">
+                ${service.description ? escapeHtml(service.description) : "Nema dodatne napomene."}
+            </p>
+
+            <div class="card-actions">
+                <button class="btn btn-danger btn-small" type="button">
+                    Obriši
+                </button>
+            </div>
+        `;
+
+        servicesList.appendChild(card);
+    });
+}
+
+function resetServicesView() {
+    document.getElementById("services-list").innerHTML = `
+        <p class="empty-state">Odaberi vozilo za prikaz servisne povijesti.</p>
+    `;
+    document.getElementById("services-count").textContent = "0 zapisa";
+    document.getElementById("total-cost").textContent = "0,00 €";
+}
+
+function getServicesCountText(count) {
+    if (count === 1) {
+        return "1 zapis";
+    }
+
+    return `${count} zapisa`;
+}
+
+function formatCurrency(value) {
+    return Number(value).toLocaleString("hr-HR", {
+        style: "currency",
+        currency: "EUR"
+    });
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+
+    return date.toLocaleDateString("hr-HR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric"
+    });
 }
