@@ -54,11 +54,14 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             if (isValid) {
-                showFormMessage(
-                    "service-message",
-                    "success",
-                    "Podaci su ispravni. U sljedećem koraku spremamo servis u bazu."
-                );
+                addService({
+                    vehicleId: Number(vehicleId),
+                    serviceType,
+                    serviceDate,
+                    mileageAtService: mileageNumber,
+                    cost: costNumber,
+                    description
+                });
             }
         });
     }
@@ -153,4 +156,38 @@ function escapeHtml(value) {
         .replaceAll(">", "&gt;")
         .replaceAll('"', "&quot;")
         .replaceAll("'", "&#039;");
+}
+
+
+async function addService(serviceData) {
+    try {
+        const response = await fetch("/carcare/api/services/add_service.php", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(serviceData)
+        });
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+            showFormMessage("service-message", "error", result.message);
+            return;
+        }
+
+        showFormMessage("service-message", "success", result.message);
+
+        document.getElementById("service-form").reset();
+
+        const filterSelect = document.getElementById("service_vehicle_filter");
+        filterSelect.value = String(serviceData.vehicleId);
+
+    } catch (error) {
+        showFormMessage(
+            "service-message",
+            "error",
+            "Nije moguće spremiti servis. Pokušaj ponovno."
+        );
+    }
 }
