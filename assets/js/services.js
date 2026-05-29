@@ -275,13 +275,29 @@ function renderServices(services, totalCostValue) {
             </p>
 
             <div class="card-actions">
-                <button class="btn btn-danger btn-small" type="button">
+                <button
+                    class="btn btn-danger btn-small"
+                    type="button"
+                    data-delete-service="${service.id}"
+                >
                     Obriši
                 </button>
             </div>
         `;
 
         servicesList.appendChild(card);
+
+        const deleteButton = card.querySelector("[data-delete-service]");
+
+        deleteButton.addEventListener("click", () => {
+            const confirmed = confirm(
+                `Jesi li siguran da želiš obrisati servis "${service.service_type}"?`
+            );
+
+            if (confirmed) {
+                deleteService(service.id, service.vehicle_id);
+            }
+        });
     });
 }
 
@@ -316,4 +332,37 @@ function formatDate(dateString) {
         month: "2-digit",
         year: "numeric"
     });
+}
+
+
+async function deleteService(serviceId, vehicleId) {
+    try {
+        const response = await fetch("/carcare/api/services/delete_service.php", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                serviceId
+            })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+            showFormMessage("service-message", "error", result.message);
+            return;
+        }
+
+        showFormMessage("service-message", "success", result.message);
+
+        loadServices(vehicleId);
+
+    } catch (error) {
+        showFormMessage(
+            "service-message",
+            "error",
+            "Nije moguće obrisati servisni zapis. Pokušaj ponovno."
+        );
+    }
 }
