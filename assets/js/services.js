@@ -1,6 +1,9 @@
+let currentServices = [];
+
 document.addEventListener("DOMContentLoaded", () => {
     const serviceForm = document.getElementById("service-form");
     const serviceVehicleFilter = document.getElementById("service_vehicle_filter");
+    const serviceTypeFilter = document.getElementById("service_type_filter");
 
     loadVehiclesForServices();
 
@@ -13,6 +16,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
         loadServices(vehicleId);
+    });
+
+    serviceTypeFilter.addEventListener("change", () => {
+        applyServiceTypeFilter();
     });
 
 
@@ -194,8 +201,11 @@ async function addService(serviceData) {
         document.getElementById("service-form").reset();
 
         const filterSelect = document.getElementById("service_vehicle_filter");
-        filterSelect.value = String(serviceData.vehicleId);
+        const typeFilter = document.getElementById("service_type_filter");
 
+        filterSelect.value = String(serviceData.vehicleId);
+        typeFilter.value = "";
+        
         loadServices(serviceData.vehicleId);
 
     } catch (error) {
@@ -226,7 +236,8 @@ async function loadServices(vehicleId) {
             return;
         }
 
-        renderServices(result.services, result.totalCost);
+        currentServices = result.services;
+        applyServiceTypeFilter();
 
     } catch (error) {
         servicesList.innerHTML = `
@@ -302,11 +313,15 @@ function renderServices(services, totalCostValue) {
 }
 
 function resetServicesView() {
+    currentServices = [];
+
     document.getElementById("services-list").innerHTML = `
         <p class="empty-state">Odaberi vozilo za prikaz servisne povijesti.</p>
     `;
+
     document.getElementById("services-count").textContent = "0 zapisa";
     document.getElementById("total-cost").textContent = "0,00 €";
+    document.getElementById("service_type_filter").value = "";
 }
 
 function getServicesCountText(count) {
@@ -365,4 +380,23 @@ async function deleteService(serviceId, vehicleId) {
             "Nije moguće obrisati servisni zapis. Pokušaj ponovno."
         );
     }
+}
+
+function applyServiceTypeFilter() {
+    const serviceTypeFilter = document.getElementById("service_type_filter");
+    const selectedType = serviceTypeFilter.value;
+
+    let filteredServices = currentServices;
+
+    if (selectedType !== "") {
+        filteredServices = currentServices.filter((service) => {
+            return service.service_type === selectedType;
+        });
+    }
+
+    const filteredTotalCost = filteredServices.reduce((sum, service) => {
+        return sum + Number(service.cost);
+    }, 0);
+
+    renderServices(filteredServices, filteredTotalCost);
 }

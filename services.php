@@ -103,6 +103,21 @@ require_once "includes/header.php";
                         </select>
                     </div>
 
+                    <div class="form-group">
+                        <label for="service_type_filter">Filtriraj po vrsti</label>
+                        <select id="service_type_filter">
+                            <option value="">Sve vrste</option>
+                            <option value="Redovni servis">Redovni servis</option>
+                            <option value="Zamjena ulja">Zamjena ulja</option>
+                            <option value="Kočnice">Kočnice</option>
+                            <option value="Gume">Gume</option>
+                            <option value="Kvačilo">Kvačilo</option>
+                            <option value="Amortizeri">Amortizeri</option>
+                            <option value="Registracija">Registracija</option>
+                            <option value="Ostalo">Ostalo</option>
+                        </select>
+                    </div>
+
                     <div class="total-cost-box">
                         <span>Ukupan trošak</span>
                         <strong id="total-cost">0,00 €</strong>
@@ -117,6 +132,6 @@ require_once "includes/header.php";
     </div>
 </main>
 
-<script src="/carcare/assets/js/services.js?v=2"></script>
+<script src="/carcare/assets/js/services.js?v=3"></script>
 
 <?php require_once "includes/footer.php"; ?>
