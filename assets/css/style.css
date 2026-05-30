@@ -512,3 +512,47 @@ main {
         grid-template-columns: 1fr;
     }
 }
+
+
+.reminder-card {
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 18px;
+    background-color: #f8fafc;
+}
+
+.reminder-card h3 {
+    margin: 0 0 10px;
+    color: #0f172a;
+}
+
+.reminder-meta {
+    display: grid;
+    gap: 6px;
+    color: #475569;
+    margin-bottom: 14px;
+}
+
+.reminder-description {
+    margin: 0 0 16px;
+    color: #334155;
+}
+
+.status-badge {
+    display: inline-block;
+    width: fit-content;
+    padding: 5px 10px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: bold;
+}
+
+.status-active {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.status-completed {
+    background-color: #dcfce7;
+    color: #166534;
+}
