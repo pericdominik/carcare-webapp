@@ -44,11 +44,12 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             if (isValid) {
-                showFormMessage(
-                    "reminder-message",
-                    "success",
-                    "Podaci su ispravni. U sljedećem koraku spremamo podsjetnik u bazu."
-                );
+                addReminder({
+                    vehicleId: Number(vehicleId),
+                    title,
+                    reminderDate,
+                    description
+                });
             }
         });
     }
@@ -145,4 +146,38 @@ function escapeHtml(value) {
         .replaceAll(">", "&gt;")
         .replaceAll('"', "&quot;")
         .replaceAll("'", "&#039;");
+}
+
+
+async function addReminder(reminderData) {
+    try {
+        const response = await fetch("/carcare/api/reminders/add_reminder.php", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(reminderData)
+        });
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+            showFormMessage("reminder-message", "error", result.message);
+            return;
+        }
+
+        showFormMessage("reminder-message", "success", result.message);
+
+        document.getElementById("reminder-form").reset();
+
+        const reminderVehicleFilter = document.getElementById("reminder_vehicle_filter");
+        reminderVehicleFilter.value = String(reminderData.vehicleId);
+
+    } catch (error) {
+        showFormMessage(
+            "reminder-message",
+            "error",
+            "Nije moguće spremiti podsjetnik. Pokušaj ponovno."
+        );
+    }
 }
