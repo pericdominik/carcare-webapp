@@ -289,17 +289,48 @@ function renderReminders(reminders) {
             <div class="card-actions">
                 ${
                     reminder.status === "active"
-                        ? `<button class="btn btn-secondary btn-small" type="button">Označi kao riješeno</button>`
+                        ? `
+                            <button
+                                class="btn btn-secondary btn-small"
+                                type="button"
+                                data-complete-reminder="${reminder.id}"
+                            >
+                                Označi kao riješeno
+                            </button>
+                        `
                         : ""
                 }
 
-                <button class="btn btn-danger btn-small" type="button">
+                <button
+                    class="btn btn-danger btn-small"
+                    type="button"
+                    data-delete-reminder="${reminder.id}"
+                >
                     Obriši
                 </button>
             </div>
         `;
 
         remindersList.appendChild(card);
+
+        const completeButton = card.querySelector("[data-complete-reminder]");
+        const deleteButton = card.querySelector("[data-delete-reminder]");
+
+        if (completeButton) {
+            completeButton.addEventListener("click", () => {
+                completeReminder(reminder.id, reminder.vehicle_id);
+            });
+        }
+
+        deleteButton.addEventListener("click", () => {
+            const confirmed = confirm(
+                `Jesi li siguran da želiš obrisati podsjetnik "${reminder.title}"?`
+            );
+
+            if (confirmed) {
+                deleteReminder(reminder.id, reminder.vehicle_id);
+            }
+        });
     });
 }
 
@@ -330,4 +361,69 @@ function formatDate(dateString) {
         month: "2-digit",
         year: "numeric"
     });
+}
+
+
+async function completeReminder(reminderId, vehicleId) {
+    try {
+        const response = await fetch("/carcare/api/reminders/complete_reminder.php", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                reminderId
+            })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+            showFormMessage("reminder-message", "error", result.message);
+            return;
+        }
+
+        showFormMessage("reminder-message", "success", result.message);
+
+        loadReminders(vehicleId);
+
+    } catch (error) {
+        showFormMessage(
+            "reminder-message",
+            "error",
+            "Nije moguće označiti podsjetnik kao riješen."
+        );
+    }
+}
+
+async function deleteReminder(reminderId, vehicleId) {
+    try {
+        const response = await fetch("/carcare/api/reminders/delete_reminder.php", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                reminderId
+            })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+            showFormMessage("reminder-message", "error", result.message);
+            return;
+        }
+
+        showFormMessage("reminder-message", "success", result.message);
+
+        loadReminders(vehicleId);
+
+    } catch (error) {
+        showFormMessage(
+            "reminder-message",
+            "error",
+            "Nije moguće obrisati podsjetnik."
+        );
+    }
 }

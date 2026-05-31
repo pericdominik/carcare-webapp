@@ -36,7 +36,6 @@ if ($vehicleId <= 0) {
 }
 
 try {
-    // Provjera pripada li vozilo prijavljenom korisniku
     $vehicleStmt = $pdo->prepare("
         SELECT id
         FROM vehicles
