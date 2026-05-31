@@ -93,6 +93,6 @@ require_once "includes/header.php";
     </div>
 </main>
 
-<script src="/carcare/assets/js/reminders.js?v=2"></script>
+<script src="/carcare/assets/js/reminders.js?v=3"></script>
 
 <?php require_once "includes/footer.php"; ?>

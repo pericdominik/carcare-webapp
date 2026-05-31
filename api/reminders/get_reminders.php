@@ -10,12 +10,12 @@ if (!isset($_SESSION["user_id"])) {
     http_response_code(401);
     echo json_encode([
         "success" => false,
-        "message" => "Moraš biti prijavljen za dodavanje podsjetnika."
+        "message" => "Moraš biti prijavljen za pregled podsjetnika."
     ]);
     exit;
 }
 
-if ($_SERVER["REQUEST_METHOD"] !== "POST") {
+if ($_SERVER["REQUEST_METHOD"] !== "GET") {
     http_response_code(405);
     echo json_encode([
         "success" => false,
@@ -24,37 +24,19 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     exit;
 }
 
-$input = json_decode(file_get_contents("php://input"), true);
+$vehicleId = (int)($_GET["vehicle_id"] ?? 0);
 
-$vehicleId = (int)($input["vehicleId"] ?? 0);
-$title = trim($input["title"] ?? "");
-$reminderDate = trim($input["reminderDate"] ?? "");
-$description = trim($input["description"] ?? "");
-
-if ($vehicleId <= 0 || $title === "" || $reminderDate === "") {
+if ($vehicleId <= 0) {
     http_response_code(400);
     echo json_encode([
         "success" => false,
-        "message" => "Vozilo, naslov i datum podsjetnika su obvezni."
-    ]);
-    exit;
-}
-
-$dateParts = explode("-", $reminderDate);
-
-if (
-    count($dateParts) !== 3 ||
-    !checkdate((int)$dateParts[1], (int)$dateParts[2], (int)$dateParts[0])
-) {
-    http_response_code(400);
-    echo json_encode([
-        "success" => false,
-        "message" => "Datum podsjetnika nije ispravan."
+        "message" => "Nije odabrano ispravno vozilo."
     ]);
     exit;
 }
 
 try {
+    // Provjera pripada li vozilo prijavljenom korisniku
     $vehicleStmt = $pdo->prepare("
         SELECT id
         FROM vehicles
@@ -80,20 +62,27 @@ try {
     }
 
     $stmt = $pdo->prepare("
-        INSERT INTO reminders (vehicle_id, title, reminder_date, description, status)
-        VALUES (:vehicle_id, :title, :reminder_date, :description, 'active')
+        SELECT id, vehicle_id, title, reminder_date, description, status, created_at
+        FROM reminders
+        WHERE vehicle_id = :vehicle_id
+        ORDER BY 
+            CASE 
+                WHEN status = 'active' THEN 0
+                ELSE 1
+            END,
+            reminder_date ASC,
+            created_at DESC
     ");
 
     $stmt->execute([
-        "vehicle_id" => $vehicleId,
-        "title" => $title,
-        "reminder_date" => $reminderDate,
-        "description" => $description
+        "vehicle_id" => $vehicleId
     ]);
+
+    $reminders = $stmt->fetchAll();
 
     echo json_encode([
         "success" => true,
-        "message" => "Podsjetnik je uspješno dodan."
+        "reminders" => $reminders
     ]);
     exit;
 
@@ -101,7 +90,7 @@ try {
     http_response_code(500);
     echo json_encode([
         "success" => false,
-        "message" => "Došlo je do pogreške pri spremanju podsjetnika."
+        "message" => "Došlo je do pogreške pri dohvaćanju podsjetnika."
     ]);
     exit;
 }
