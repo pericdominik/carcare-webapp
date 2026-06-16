@@ -643,3 +643,41 @@ main {
         grid-template-columns: 1fr;
     }
 }
+
+
+.source-list {
+    display: grid;
+    gap: 18px;
+}
+
+.source-item {
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 20px;
+}
+
+.source-item h3 {
+    margin-top: 0;
+    margin-bottom: 8px;
+    color: #0f172a;
+}
+
+.source-item p {
+    margin-top: 0;
+    color: #475569;
+}
+
+.source-item a {
+    color: #0284c7;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.source-item a:hover {
+    text-decoration: underline;
+}
+
+.sources-section {
+    margin-top: 28px;
+}

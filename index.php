@@ -11,8 +11,14 @@
                 </p>
 
                 <div class="button-group">
-                    <a href="/carcare/register.php" class="btn btn-primary">Kreiraj račun</a>
-                    <a href="/carcare/login.php" class="btn btn-secondary">Prijavi se</a>
+                    <?php if (isset($_SESSION["user_id"])): ?>
+                        <a href="/carcare/dashboard.php" class="btn btn-primary">Otvori nadzornu ploču</a>
+                        <a href="/carcare/vehicles.php" class="btn btn-secondary">Moja vozila</a>
+                        <a href="/carcare/services.php" class="btn btn-secondary">Servisi</a>
+                    <?php else: ?>
+                        <a href="/carcare/register.php" class="btn btn-primary">Kreiraj račun</a>
+                        <a href="/carcare/login.php" class="btn btn-secondary">Prijavi se</a>
+                    <?php endif; ?>
                 </div>
             </div>
         </section>
