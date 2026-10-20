@@ -58,13 +58,17 @@ function renderUpcomingReminders(reminders) {
         const card = document.createElement("article");
         card.className = "reminder-card";
 
+        const displayStatus = getReminderDisplayStatus(reminder);
+
         card.innerHTML = `
             <h3>${escapeHtml(reminder.title)}</h3>
 
             <div class="reminder-meta">
                 <span><strong>Vozilo:</strong> ${escapeHtml(reminder.brand)} ${escapeHtml(reminder.model)}</span>
                 <span><strong>Datum:</strong> ${formatDate(reminder.reminder_date)}</span>
-                <span class="status-badge status-active">Aktivan</span>
+                <span class="status-badge ${displayStatus.className}">
+                    ${displayStatus.text}
+                </span>
             </div>
 
             <p class="reminder-description">
@@ -106,4 +110,41 @@ function escapeHtml(value) {
         .replaceAll(">", "&gt;")
         .replaceAll('"', "&quot;")
         .replaceAll("'", "&#039;");
+}
+
+function getReminderDisplayStatus(reminder) {
+    if (reminder.status === "completed") {
+        return {
+            value: "completed",
+            text: "Riješen",
+            className: "status-completed"
+        };
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const reminderDate = new Date(`${reminder.reminder_date}T00:00:00`);
+
+    if (reminderDate < today) {
+        return {
+            value: "overdue",
+            text: "Rok prošao",
+            className: "status-overdue"
+        };
+    }
+
+    if (reminderDate.getTime() === today.getTime()) {
+        return {
+            value: "today",
+            text: "Danas",
+            className: "status-today"
+        };
+    }
+
+    return {
+        value: "upcoming",
+        text: "Budući",
+        className: "status-upcoming"
+    };
 }

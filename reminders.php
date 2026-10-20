@@ -79,7 +79,10 @@ require_once "includes/header.php";
                         <label for="reminder_status_filter">Status</label>
                         <select id="reminder_status_filter">
                             <option value="">Svi podsjetnici</option>
-                            <option value="active">Aktivni</option>
+                            <option value="active">Svi neriješeni</option>
+                            <option value="upcoming">Predstojeći</option>
+                            <option value="today">Danas</option>
+                            <option value="overdue">Rok prošao</option>
                             <option value="completed">Riješeni</option>
                         </select>
                     </div>
@@ -93,6 +96,6 @@ require_once "includes/header.php";
     </div>
 </main>
 
-<script src="/carcare/assets/js/reminders.js?v=4"></script>
+<script src="/carcare/assets/js/reminders.js?v=5"></script>
 
 <?php require_once "includes/footer.php"; ?>

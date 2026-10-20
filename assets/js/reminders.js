@@ -236,16 +236,20 @@ async function loadReminders(vehicleId) {
 }
 
 function applyReminderStatusFilter() {
-    const statusFilter = document.getElementById("reminder_status_filter");
-    const selectedStatus = statusFilter.value;
+    const selectedStatus =
+        document.getElementById("reminder_status_filter").value;
 
-    let filteredReminders = currentReminders;
+    const filteredReminders = currentReminders.filter((reminder) => {
+        if (selectedStatus === "") {
+            return true;
+        }
 
-    if (selectedStatus !== "") {
-        filteredReminders = currentReminders.filter((reminder) => {
-            return reminder.status === selectedStatus;
-        });
-    }
+        if (selectedStatus === "active") {
+            return reminder.status === "active";
+        }
+
+        return getReminderDisplayStatus(reminder).value === selectedStatus;
+    });
 
     renderReminders(filteredReminders);
 }
@@ -271,8 +275,9 @@ function renderReminders(reminders) {
         const card = document.createElement("article");
         card.className = "reminder-card";
 
-        const statusText = reminder.status === "active" ? "Aktivan" : "Riješen";
-        const statusClass = reminder.status === "active" ? "status-active" : "status-completed";
+        const displayStatus = getReminderDisplayStatus(reminder);
+        const statusText = displayStatus.text;
+        const statusClass = displayStatus.className;
 
         card.innerHTML = `
             <h3>${escapeHtml(reminder.title)}</h3>
@@ -427,3 +432,40 @@ async function deleteReminder(reminderId, vehicleId) {
         );
     }
 }
+
+function getReminderDisplayStatus(reminder) {
+    if (reminder.status === "completed") {
+        return {
+            value: "completed",
+            text: "Riješen",
+            className: "status-completed"
+        };
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const reminderDate = new Date(`${reminder.reminder_date}T00:00:00`);
+
+    if (reminderDate < today) {
+        return {
+            value: "overdue",
+            text: "Rok prošao",
+            className: "status-overdue"
+        };
+    }
+
+    if (reminderDate.getTime() === today.getTime()) {
+        return {
+            value: "today",
+            text: "Danas",
+            className: "status-today"
+        };
+    }
+
+    return {
+        value: "upcoming",
+        text: "Budući",
+        className: "status-upcoming"
+    };
+} 

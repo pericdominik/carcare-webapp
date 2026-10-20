@@ -557,6 +557,20 @@ main {
     color: #166534;
 }
 
+.status-badge.status-upcoming {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+
+.status-badge.status-today {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.status-badge.status-overdue {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
 
 .stats-grid {
     display: grid;
