@@ -1,4 +1,5 @@
 let currentServices = [];
+let editingServiceId = null;
 
 document.addEventListener("DOMContentLoaded", () => {
     const serviceForm = document.getElementById("service-form");
@@ -7,8 +8,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
     loadVehiclesForServices();
 
+    document.getElementById("cancel-service-edit").addEventListener("click", () => {
+        resetServiceForm();
+        clearServiceErrors();
+    }); 
+
     serviceVehicleFilter.addEventListener("change", () => {
     const vehicleId = serviceVehicleFilter.value;
+    
+    resetServiceForm();
+    clearServiceErrors();
 
     if (vehicleId === "") {
         resetServicesView();
@@ -74,14 +83,23 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             if (isValid) {
-                addService({
+                const serviceData = {
                     vehicleId: Number(vehicleId),
                     serviceType,
                     serviceDate,
                     mileageAtService: mileageNumber,
                     cost: costNumber,
                     description
-                });
+                };
+
+                if (editingServiceId !== null) {
+                    updateService({
+                        ...serviceData,
+                        serviceId: editingServiceId
+                    });
+                } else {
+                    addService(serviceData);
+                }
             }
         });
     }
@@ -287,6 +305,14 @@ function renderServices(services, totalCostValue) {
 
             <div class="card-actions">
                 <button
+                    class="btn btn-secondary btn-small"
+                    type="button"
+                    data-edit-service="${service.id}"
+                >
+                    Uredi
+                </button>
+
+                <button
                     class="btn btn-danger btn-small"
                     type="button"
                     data-delete-service="${service.id}"
@@ -297,6 +323,12 @@ function renderServices(services, totalCostValue) {
         `;
 
         servicesList.appendChild(card);
+
+        const editButton = card.querySelector("[data-edit-service]");
+
+        editButton.addEventListener("click", () => {
+            startEditingService(service);
+        });
 
         const deleteButton = card.querySelector("[data-delete-service]");
 
@@ -368,6 +400,13 @@ async function deleteService(serviceId, vehicleId) {
             showFormMessage("service-message", "error", result.message);
             return;
         }
+        
+        if (
+            editingServiceId !== null &&
+            Number(editingServiceId) === Number(serviceId)
+        ) {
+            resetServiceForm();
+        }
 
         showFormMessage("service-message", "success", result.message);
 
@@ -399,4 +438,118 @@ function applyServiceTypeFilter() {
     }, 0);
 
     renderServices(filteredServices, filteredTotalCost);
+}
+
+function startEditingService(service) {
+    clearServiceErrors();
+
+    editingServiceId = service.id;
+
+    const vehicleSelect = document.getElementById("vehicle_id");
+    vehicleSelect.value = String(service.vehicle_id);
+    vehicleSelect.disabled = true;
+
+    document.getElementById("service_type").value = service.service_type;
+    document.getElementById("service_date").value = service.service_date;
+    document.getElementById("mileage_at_service").value =
+        service.mileage_at_service;
+    document.getElementById("cost").value = service.cost;
+    document.getElementById("description").value =
+        service.description || "";
+
+    document.getElementById("service-form-title").textContent =
+        "Uredi servisni zapis";
+    document.getElementById("service-submit").textContent =
+        "Spremi promjene";
+    document.getElementById("cancel-service-edit").hidden = false;
+
+    document.getElementById("service-form-title").scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+    });
+
+    document.getElementById("service_type").focus({
+        preventScroll: true
+    });
+}
+
+function resetServiceForm() {
+    editingServiceId = null;
+
+    document.getElementById("service-form").reset();
+    document.getElementById("vehicle_id").disabled = false;
+
+    document.getElementById("service-form-title").textContent =
+        "Dodaj servisni zapis";
+    document.getElementById("service-submit").textContent =
+        "Spremi servis";
+    document.getElementById("cancel-service-edit").hidden = true;
+}
+
+async function updateService(serviceData) {
+    const submitButton = document.getElementById("service-submit");
+    const cancelButton = document.getElementById("cancel-service-edit");
+
+    submitButton.disabled = true;
+    cancelButton.disabled = true;
+
+    const editButtons = document.querySelectorAll("[data-edit-service]");
+    const deleteButtons = document.querySelectorAll("[data-delete-service]");
+    const vehicleFilter = document.getElementById("service_vehicle_filter");
+    const typeFilter = document.getElementById("service_type_filter");
+
+    editButtons.forEach((button) => button.disabled = true);
+    deleteButtons.forEach((button) => button.disabled = true);
+    vehicleFilter.disabled = true;
+    typeFilter.disabled = true;
+
+    try {
+        const response = await fetch(
+            "/carcare/api/services/update_service.php",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(serviceData)
+            }
+        );
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+            showFormMessage(
+                "service-message",
+                "error",
+                result.message || "Nije moguće ažurirati servis."
+            );
+            return;
+        }
+
+        resetServiceForm();
+
+        showFormMessage(
+            "service-message",
+            "success",
+            result.message
+        );
+
+        vehicleFilter.value = String(serviceData.vehicleId);
+
+        await loadServices(serviceData.vehicleId);
+    } catch (error) {
+        showFormMessage(
+            "service-message",
+            "error",
+            "Nije moguće ažurirati servis. Pokušaj ponovno."
+        );
+    } finally {
+        submitButton.disabled = false;
+        cancelButton.disabled = false;
+        vehicleFilter.disabled = false;
+        typeFilter.disabled = false;
+
+        editButtons.forEach((button) => button.disabled = false);
+        deleteButtons.forEach((button) => button.disabled = false);
+    }
 }

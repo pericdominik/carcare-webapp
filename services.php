@@ -15,7 +15,7 @@ require_once "includes/header.php";
 
         <section class="content-grid">
             <article class="form-card">
-                <h2>Dodaj servisni zapis</h2>
+                <h2 id="service-form-title">Dodaj servisni zapis</h2>
 
                 <div id="service-message" class="form-message" aria-live="polite"></div>
 
@@ -83,8 +83,14 @@ require_once "includes/header.php";
                         ></textarea>
                     </div>
 
-                    <button type="submit" class="btn btn-primary auth-btn">
+                    <button
+                        type="submit" id="service-submit" class="btn btn-primary auth-btn">
                         Spremi servis
+                    </button>
+
+                    <button
+                        type="button" id="cancel-service-edit" class="btn btn-secondary" hidden>
+                        Odustani
                     </button>
                 </form>
             </article>
@@ -132,6 +138,6 @@ require_once "includes/header.php";
     </div>
 </main>
 
-<script src="/carcare/assets/js/services.js?v=3"></script>
+<script src="/carcare/assets/js/services.js?v=4"></script>
 
 <?php require_once "includes/footer.php"; ?>

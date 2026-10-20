@@ -57,12 +57,15 @@ if (
 }
 
 try {
+    $pdo->beginTransaction();
+
     $vehicleStmt = $pdo->prepare("
-        SELECT id
+        SELECT id, mileage
         FROM vehicles
         WHERE id = :vehicle_id
         AND user_id = :user_id
         LIMIT 1
+        FOR UPDATE
     ");
 
     $vehicleStmt->execute([
@@ -73,10 +76,72 @@ try {
     $vehicle = $vehicleStmt->fetch();
 
     if (!$vehicle) {
+        $pdo->rollBack();
+
         http_response_code(403);
         echo json_encode([
             "success" => false,
             "message" => "Odabrano vozilo nije pronađeno."
+        ]);
+        exit;
+    }
+
+    $earlierStmt = $pdo->prepare("
+        SELECT MAX(mileage_at_service)
+        FROM service_records
+        WHERE vehicle_id = :vehicle_id
+        AND service_date < :service_date
+    ");
+
+    $earlierStmt->execute([
+        "vehicle_id" => $vehicleId,
+        "service_date" => $serviceDate
+    ]);
+
+    $earlierMileage = $earlierStmt->fetchColumn();
+
+    if (
+        $earlierMileage !== null &&
+        $mileageAtService < (int)$earlierMileage
+    ) {
+        $pdo->rollBack();
+
+        http_response_code(400);
+        echo json_encode([
+            "success" => false,
+            "message" => "Kilometraža ne može biti manja od " .
+                number_format((int)$earlierMileage, 0, ",", ".") .
+                " km jer postoji raniji servis s tom kilometražom."
+        ]);
+        exit;
+    }
+
+    $laterStmt = $pdo->prepare("
+        SELECT MIN(mileage_at_service)
+        FROM service_records
+        WHERE vehicle_id = :vehicle_id
+        AND service_date > :service_date
+    ");
+
+    $laterStmt->execute([
+        "vehicle_id" => $vehicleId,
+        "service_date" => $serviceDate
+    ]);
+
+    $laterMileage = $laterStmt->fetchColumn();
+
+    if (
+        $laterMileage !== null &&
+        $mileageAtService > (int)$laterMileage
+    ) {
+        $pdo->rollBack();
+
+        http_response_code(400);
+        echo json_encode([
+            "success" => false,
+            "message" => "Kilometraža ne može biti veća od " .
+                number_format((int)$laterMileage, 0, ",", ".") .
+                " km jer postoji kasniji servis s tom kilometražom."
         ]);
         exit;
     }
@@ -97,6 +162,23 @@ try {
         "description" => $description
     ]);
 
+    if ($mileageAtService > (int)$vehicle["mileage"]) {
+        $updateMileageStmt = $pdo->prepare("
+            UPDATE vehicles
+            SET mileage = :mileage
+            WHERE id = :vehicle_id
+            AND user_id = :user_id
+        ");
+
+        $updateMileageStmt->execute([
+            "mileage" => $mileageAtService,
+            "vehicle_id" => $vehicleId,
+            "user_id" => $_SESSION["user_id"]
+        ]);
+    }
+
+    $pdo->commit();
+
     echo json_encode([
         "success" => true,
         "message" => "Servisni zapis je uspješno dodan."
@@ -104,6 +186,10 @@ try {
     exit;
 
 } catch (PDOException $e) {
+    if ($pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
+
     http_response_code(500);
     echo json_encode([
         "success" => false,
