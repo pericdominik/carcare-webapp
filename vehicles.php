@@ -15,7 +15,7 @@ require_once "includes/header.php";
 
         <section class="content-grid">
             <article class="form-card">
-                <h2>Dodaj novo vozilo</h2>
+                <h2 id="vehicle-form-title">Dodaj novo vozilo</h2>
 
                 <div id="vehicle-message" class="form-message" aria-live="polite"></div>
 
@@ -75,8 +75,14 @@ require_once "includes/header.php";
                         <small class="error-message" id="mileage-error"></small>
                     </div>
 
-                    <button type="submit" class="btn btn-primary auth-btn">
+                    <button
+                        type="submit" id="vehicle-submit" class="btn btn-primary auth-btn">
                         Spremi vozilo
+                    </button>
+
+                    <button
+                        type="button" id="cancel-edit" class="btn btn-secondary" hidden>
+                        Odustani
                     </button>
                 </form>
             </article>
@@ -95,6 +101,6 @@ require_once "includes/header.php";
     </div>
 </main>
 
-<script src="/carcare/assets/js/vehicles.js"></script>
+<script src="/carcare/assets/js/vehicles.js?v=2"></script>
 
 <?php require_once "includes/footer.php"; ?>

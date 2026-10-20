@@ -16,17 +16,17 @@ require_once "includes/header.php";
         <section id="dashboard-message" class="form-message" aria-live="polite"></section>
 
         <section class="stats-grid">
-            <article class="stat-card">
+            <a href="/carcare/vehicles.php" class="stat-card stat-card-link">
                 <span class="stat-label">Moja vozila</span>
                 <strong id="stat-vehicles">0</strong>
                 <p>Ukupan broj dodanih vozila.</p>
-            </article>
+            </a>
 
-            <article class="stat-card">
+            <a href="/carcare/services.php" class="stat-card stat-card-link">
                 <span class="stat-label">Servisni zapisi</span>
                 <strong id="stat-services">0</strong>
                 <p>Ukupan broj spremljenih servisa.</p>
-            </article>
+            </a>
 
             <article class="stat-card">
                 <span class="stat-label">Trošak servisa</span>
@@ -34,11 +34,11 @@ require_once "includes/header.php";
                 <p>Ukupan zabilježeni trošak održavanja.</p>
             </article>
 
-            <article class="stat-card">
+            <a href="/carcare/reminders.php" class="stat-card stat-card-link">
                 <span class="stat-label">Aktivni podsjetnici</span>
                 <strong id="stat-reminders">0</strong>
                 <p>Podsjetnici koji još nisu označeni kao riješeni.</p>
-            </article>
+            </a>
         </section>
 
         <section class="dashboard-grid">

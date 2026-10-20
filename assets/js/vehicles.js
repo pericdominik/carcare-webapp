@@ -1,7 +1,14 @@
+let editingVehicleId = null;
+
 document.addEventListener("DOMContentLoaded", () => {
     const vehicleForm = document.getElementById("vehicle-form");
 
     loadVehicles();
+
+    document.getElementById("cancel-edit").addEventListener("click", () => {
+        resetVehicleForm();
+        clearVehicleErrors();
+    });
 
     if (vehicleForm) {
         vehicleForm.addEventListener("submit", (event) => {
@@ -53,13 +60,22 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             if (isValid) {
-                addVehicle({
+                const vehicleData = {
                     brand,
                     model,
                     year: yearNumber,
                     licensePlate,
                     mileage: mileageNumber
-                });
+                };
+
+                if (editingVehicleId !== null) {
+                    updateVehicle({
+                        ...vehicleData,
+                        vehicleId: editingVehicleId
+                    });
+                } else {
+                    addVehicle(vehicleData);
+                }
             }
         });
     }
@@ -193,6 +209,13 @@ function renderVehicles(vehicles) {
                     Servisi
                 </a>
                 <button
+                    class="btn btn-secondary btn-small"
+                    type="button"
+                    data-edit-vehicle="${vehicle.id}"
+                >
+                    Uredi
+                </button>
+                <button
                     class="btn btn-danger btn-small"
                     type="button"
                     data-delete-vehicle="${vehicle.id}"
@@ -203,6 +226,12 @@ function renderVehicles(vehicles) {
         `;
 
         vehiclesList.appendChild(card);
+
+        const editButton = card.querySelector("[data-edit-vehicle]");
+
+        editButton.addEventListener("click", () => {
+            startEditingVehicle(vehicle);
+        });
 
         const deleteButton = card.querySelector("[data-delete-vehicle]");
 
@@ -258,6 +287,10 @@ async function deleteVehicle(vehicleId) {
             showFormMessage("vehicle-message", "error", result.message);
             return;
         }
+        
+        if (Number(editingVehicleId) === Number(vehicleId)) {
+            resetVehicleForm();
+        }
 
         showFormMessage("vehicle-message", "success", result.message);
 
@@ -269,5 +302,91 @@ async function deleteVehicle(vehicleId) {
             "error",
             "Nije moguće obrisati vozilo. Pokušaj ponovno."
         );
+    }
+}
+
+function startEditingVehicle(vehicle) {
+    clearVehicleErrors();
+
+    editingVehicleId = vehicle.id;
+
+    document.getElementById("brand").value = vehicle.brand;
+    document.getElementById("model").value = vehicle.model;
+    document.getElementById("year").value = vehicle.year;
+    document.getElementById("license_plate").value =
+        vehicle.license_plate || "";
+    document.getElementById("mileage").value = vehicle.mileage;
+
+    document.getElementById("vehicle-form-title").textContent =
+        "Uredi vozilo";
+    document.getElementById("vehicle-submit").textContent =
+        "Spremi promjene";
+    document.getElementById("cancel-edit").hidden = false;
+
+    document.getElementById("vehicle-form-title").scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+    });
+
+    document.getElementById("brand").focus({
+        preventScroll: true
+    });
+}
+
+function resetVehicleForm() {
+    editingVehicleId = null;
+
+    document.getElementById("vehicle-form").reset();
+    document.getElementById("vehicle-form-title").textContent =
+        "Dodaj novo vozilo";
+    document.getElementById("vehicle-submit").textContent =
+        "Spremi vozilo";
+    document.getElementById("cancel-edit").hidden = true;
+}
+
+async function updateVehicle(vehicleData) {
+    const submitButton = document.getElementById("vehicle-submit");
+    submitButton.disabled = true;
+
+    try {
+        const response = await fetch(
+            "/carcare/api/vehicles/update_vehicle.php",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(vehicleData)
+            }
+        );
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+            showFormMessage(
+                "vehicle-message",
+                "error",
+                result.message || "Nije moguće ažurirati vozilo."
+            );
+            return;
+        }
+
+        resetVehicleForm();
+
+        showFormMessage(
+            "vehicle-message",
+            "success",
+            result.message
+        );
+
+        await loadVehicles();
+    } catch (error) {
+        showFormMessage(
+            "vehicle-message",
+            "error",
+            "Nije moguće ažurirati vozilo. Pokušaj ponovno."
+        );
+    } finally {
+        submitButton.disabled = false;
     }
 }
